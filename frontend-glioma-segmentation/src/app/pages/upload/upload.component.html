@@ -1,0 +1,26 @@
+<div class="upload-container">
+  <div class="upload-box" (click)="fileInput.click()">
+    <button>Cargar imagen</button>
+    <h2>Arrastra tu imagen aquí</h2>
+    <p>o haz clic para seleccionarla desde tu computadora</p>
+    <input
+      type="file"
+      hidden
+      #fileInput
+      accept=".nii,.nii.gz,.png,.jpg,.jpeg"
+      (change)="onFileSelected($event)"
+    />
+  </div>
+
+  <div class="example-image">
+    <div class="content-img">
+      <img src="mri_example.png" alt="Ejemplo de imagen cerebral MRI" />
+      <p class="caption">Ejemplo de corte axial de resonancia magnética cerebral</p>
+    </div>
+
+    <div class="content-img">
+      <img src="tumor_example.png" alt="Ejemplo de tumor cerebral" />
+      <p class="caption">Ejemplo de tumor cerebral</p>
+    </div>
+  </div>
+</div>
