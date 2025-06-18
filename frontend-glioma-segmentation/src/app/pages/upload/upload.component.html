@@ -1,26 +1,48 @@
 <div class="upload-container">
-  <div class="upload-box" (click)="fileInput.click()">
-    <button>Cargar imagen</button>
-    <h2>Arrastra tu imagen aquí</h2>
-    <p>o haz clic para seleccionarla desde tu computadora</p>
-    <input
-      type="file"
-      hidden
-      #fileInput
-      accept=".nii,.nii.gz,.png,.jpg,.jpeg"
-      (change)="onFileSelected($event)"
-    />
-  </div>
-
-  <div class="example-image">
-    <div class="content-img">
-      <img src="mri_example.png" alt="Ejemplo de imagen cerebral MRI" />
-      <p class="caption">Ejemplo de corte axial de resonancia magnética cerebral</p>
+  @if(!previewUrl){
+    <div class="upload-box"
+      (click)="fileInput.click()"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event)">">
+      <button>Cargar imagen</button>
+      <h2>Arrastra tu imagen aquí</h2>
+      <p>o haz clic para seleccionarla desde tu computadora</p>
+      <input
+        type="file"
+        hidden
+        #fileInput
+        accept=".nii,.nii.gz,.png,.jpg,.jpeg"
+        (change)="onFileSelected($event)"
+      />
     </div>
-
-    <div class="content-img">
-      <img src="tumor_example.png" alt="Ejemplo de tumor cerebral" />
-      <p class="caption">Ejemplo de tumor cerebral</p>
+  }
+  @else {
+    <div class="preview">
+      <div class="preview-label">
+        Vista previa
+      </div>
+      <img class="preview-img" [src]="previewUrl" alt="Vista previa" />
     </div>
-  </div>
+  }
+
+  @if(!previewUrl){
+    <div class="example-image">
+      <div class="content-img">
+        <img src="mri_example.png" alt="Ejemplo de imagen cerebral MRI" />
+        <p class="caption">Ejemplo de corte axial</p>
+      </div>
+
+      <div class="content-img">
+        <img src="tumor_example.png" alt="Ejemplo de tumor cerebral" />
+        <p class="caption">Ejemplo de tumor cerebral</p>
+      </div>
+    </div>
+  }
+  @else{
+    <div class="content-tools">
+      <button>Iniciar segmentación</button>
+      <button>Recorte manual</button>
+    </div>
+  }
+
 </div>

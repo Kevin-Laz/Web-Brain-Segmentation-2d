@@ -52,6 +52,29 @@
     }
   }
 
+  .preview{
+    text-align: center;
+    position: relative;
+    &-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: rgba(0, 112, 243, 0.85);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    &-img{
+      width: 480px;
+      height: auto;
+      border-radius: 12px;
+    }
+  }
+
+
+
   .example-image {
     text-align: center;
 
@@ -71,6 +94,10 @@
         color: #555;
       }
     }
-
+  }
+  .content-tools{
+    flex-direction: column;
+    gap: 32px;
+    display: flex;
   }
 }
