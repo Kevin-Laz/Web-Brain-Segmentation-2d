@@ -11,7 +11,7 @@
         type="file"
         hidden
         #fileInput
-        accept=".nii,.nii.gz,.png,.jpg,.jpeg"
+        accept=".dcm,.png,.jpg,.jpeg"
         (change)="onFileSelected($event)"
       />
     </div>
@@ -40,7 +40,12 @@
   }
   @else{
     <div class="content-tools">
-      <button>Iniciar segmentación</button>
+      @if(!procesamiento){
+        <button (click)="iniciarSegmentacion()">Iniciar procesamiento</button>
+      }
+      @else{
+        <button (click)="iniciarSegmentacion()">Iniciar segmentación</button>
+      }
       <button>Recorte manual</button>
     </div>
   }

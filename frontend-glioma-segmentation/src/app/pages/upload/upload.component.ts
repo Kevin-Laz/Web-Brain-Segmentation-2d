@@ -10,6 +10,7 @@ export class UploadComponent {
 
   selectedFile: File | null = null;
   previewUrl: string | null = null;
+  procesamiento: boolean = false;
 
   onFileSelected(event:Event): void{
     const input = event.target as HTMLInputElement;
@@ -26,7 +27,7 @@ export class UploadComponent {
       };
       reader.readAsDataURL(file);
     } else {
-      this.previewUrl = null;
+      this.previewUrl = 'file-dcm.png';
     }
 
     console.log('Archivo seleccionado:', file.name);
@@ -56,10 +57,34 @@ export class UploadComponent {
       };
       reader.readAsDataURL(file);
     } else {
-      this.previewUrl = null;
+      this.previewUrl = 'file-dcm.png';
     }
 
     console.log('Archivo arrastrado:', file.name);
   }
 
+
+  iniciarSegmentacion(): void {
+    if (!this.selectedFile || this.procesamiento) return;
+
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
+
+    fetch('http://localhost:8000/procesar-dcm', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.previewUrl = reader.result as string;
+      };
+      reader.readAsDataURL(blob);
+      this.procesamiento = true;
+    })
+    .catch(error => {
+      console.error('Error al segmentar la imagen:', error);
+    });
+  }
 }
