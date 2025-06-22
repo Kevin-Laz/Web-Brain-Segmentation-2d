@@ -1,1 +1,81 @@
-<p>segment-120 works!</p>
+<div class="upload-container-single">
+  <h3 class="mod-label">Sube tus imágenes T1c y T2-FLAIR</h3>
+
+  <!-- DROP -->
+  @if (!files.t1c || !files.t2f) {
+    <div
+      class="upload-box"
+      (click)="triggerInput()"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event, 't1c')"
+    >
+      <button>Subir imágenes</button>
+      <h2>Arrastra ambas imágenes aquí</h2>
+      <p>(Una T1c y una T2-FLAIR)</p>
+      <input
+        type="file"
+        hidden
+        multiple
+        accept=".dcm,.png,.jpg,.jpeg"
+        (change)="onFilesSelected($event)"
+        #inputRef_t1c
+      />
+    </div>
+  }
+
+  <!-- UNA O DOS IMÁGENES CARGADAS -->
+  @if ((files.t1c || files.t2f) && !fusionedUrl && !loading) {
+    <div class="result-section">
+      @if (files.t1c) {
+        <div class="preview">
+          <div class="preview-label">T1c</div>
+          <img class="preview-img" src="file-dcm.png" alt="Vista previa T1c" />
+          <div class="file-name">{{ files.t1c.name }}</div>
+        </div>
+      }
+
+      @if (files.t2f) {
+        <div class="preview">
+          <div class="preview-label">T2-FLAIR</div>
+          <img class="preview-img" src="file-dcm.png" alt="Vista previa T2-FLAIR" />
+          <div class="file-name">{{ files.t2f.name }}</div>
+        </div>
+      }
+    </div>
+
+    @if (files.t1c && files.t2f) {
+      <button class="fusionar-btn" (click)="fusionar()">Segmentar</button>
+      <button class="swap-btn" (click)="swapModalities()">Intercambiar posiciones</button>
+    }
+  }
+
+  <!-- CARGANDO -->
+  @if (loading) {
+    <div class="preview">
+      <div class="preview-label">Procesando...</div>
+      <div class="loader-overlay">
+        <l-quantum size="55" speed="1.75" color="#f39c12"></l-quantum>
+      </div>
+    </div>
+  }
+
+  <!-- RESULTADO -->
+  @if (fusionedUrl) {
+    <div class="result-section">
+      <div class="preview">
+        <div class="preview-label">T1c Preprocesada</div>
+        <img class="preview-img" [src]="previewUrls.t1c" alt="T1c procesada" />
+      </div>
+
+      <div class="preview">
+        <div class="preview-label">T2-FLAIR Preprocesada</div>
+        <img class="preview-img" [src]="previewUrls.t2f" alt="T2-FLAIR procesada" />
+      </div>
+
+      <div class="preview">
+        <div class="preview-label">Segmentación fusionada</div>
+        <img class="preview-img" [src]="fusionedUrl" alt="Segmentación fusionada" />
+      </div>
+    </div>
+  }
+</div>

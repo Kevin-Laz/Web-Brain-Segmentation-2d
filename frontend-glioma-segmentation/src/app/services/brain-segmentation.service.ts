@@ -19,19 +19,37 @@ export class BrainSegmentationService {
   }
 
   segmentarGlioma(file: File, modalidad: string, slice: number, patientId: string): Observable<Blob> {
-  const formData = new FormData();
-  formData.append('file', file);
+    const formData = new FormData();
+    formData.append('file', file);
 
-  const params = new HttpParams()
-    .set('modalidad', modalidad)
-    .set('slice_index', slice.toString())
-    .set('patient_id', patientId);
+    const params = new HttpParams()
+      .set('modalidad', modalidad)
+      .set('slice_index', slice.toString())
+      .set('patient_id', patientId);
 
-  return this.http.post(`${this.apiUrl}/segmentar-glioma`, formData, {
-    params,
-    responseType: 'blob'
-  });
+    return this.http.post(`${this.apiUrl}/segmentar-glioma`, formData, {
+      params,
+      responseType: 'blob'
+    });
   }
+
+  fusionarGliomaFusionado(
+    fileT1c: File,
+    fileT2f: File,
+    slice: number = 0,
+    patientId: string = 'unknown'
+  ): Observable<Blob> {
+    const formData = new FormData();
+    formData.append('file_t1c', fileT1c);
+    formData.append('file_t2f', fileT2f);
+    formData.append('slice_index', slice.toString());
+    formData.append('patient_id', patientId);
+
+    return this.http.post(`${this.apiUrl}/fusionar-glioma`, formData, {
+      responseType: 'blob'
+    });
+  }
+
 
 
 }
