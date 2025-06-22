@@ -31,21 +31,48 @@
           <div class="preview-label">T1c</div>
           <img class="preview-img" src="file-dcm.png" alt="Vista previa T1c" />
           <div class="file-name">{{ files.t1c.name }}</div>
+          <button class="delete-btn" (click)="removeFile('t1c')">Eliminar</button>
         </div>
       }
 
+      <!-- BOTÓN DE INTERCAMBIO CENTRADO -->
+      @if(files.t1c && files.t2f){
+        <div class="swap-preview">
+          <button
+            class="swap-btn"
+            [class.animate]="isSwapping"
+            (click)="swapModalities()"
+          >
+            ⇄
+          </button>
+        </div>
+      }
       @if (files.t2f) {
         <div class="preview">
           <div class="preview-label">T2-FLAIR</div>
           <img class="preview-img" src="file-dcm.png" alt="Vista previa T2-FLAIR" />
           <div class="file-name">{{ files.t2f.name }}</div>
+          <button class="delete-btn" (click)="removeFile('t2f')">Eliminar</button>
         </div>
       }
     </div>
 
     @if (files.t1c && files.t2f) {
+      @if (files.t1c && files.t2f && !fusionedUrl && !loading) {
+          <div class="slice-controls">
+            <label for="sliceIndex">Corte axial (0–154):</label>
+            <div class="slice-range-group">
+              <input type="range" min="0" max="154" [(ngModel)]="sliceIndex" class="slice-range" />
+              <input type="number" min="0" max="154" [(ngModel)]="sliceIndex" class="slice-number" />
+            </div>
+
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="nuevoPaciente" />
+              ¿Es un nuevo paciente?
+            </label>
+          </div>
+        }
       <button class="fusionar-btn" (click)="fusionar()">Segmentar</button>
-      <button class="swap-btn" (click)="swapModalities()">Intercambiar posiciones</button>
     }
   }
 
@@ -63,13 +90,13 @@
   @if (fusionedUrl) {
     <div class="result-section">
       <div class="preview">
-        <div class="preview-label">T1c Preprocesada</div>
-        <img class="preview-img" [src]="previewUrls.t1c" alt="T1c procesada" />
+        <div class="preview-label">T1c Original</div>
+        <img class="preview-img" [src]="t1cUrl" alt="T1c procesada" />
       </div>
 
       <div class="preview">
-        <div class="preview-label">T2-FLAIR Preprocesada</div>
-        <img class="preview-img" [src]="previewUrls.t2f" alt="T2-FLAIR procesada" />
+        <div class="preview-label">T2-FLAIR Original</div>
+        <img class="preview-img" [src]="t2fUrl" alt="T2-FLAIR procesada" />
       </div>
 
       <div class="preview">
@@ -77,5 +104,7 @@
         <img class="preview-img" [src]="fusionedUrl" alt="Segmentación fusionada" />
       </div>
     </div>
+
+    <button class="clear-btn" (click)="reset()">Nueva segmentación</button>
   }
 </div>

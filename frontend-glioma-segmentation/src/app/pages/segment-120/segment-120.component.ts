@@ -17,51 +17,61 @@ quantum.register();
 export class Segment120Component {
   @ViewChild('inputRef_t1c') inputUpload!: ElementRef<HTMLInputElement>;
 
+  // URLs base64 resultantes
+  t1cUrl: string | null = null;
+  t2fUrl: string | null = null;
+  fusionedUrl: string | null = null;
+
   // Archivos subidos
   files: Record<Modalidad, File | null> = {
     t1c: null,
     t2f: null
   };
 
-  // Vista previa (por ahora dummy)
-  previewUrls: Record<Modalidad, string | null> = {
-    t1c: 'file-dcm.png',
-    t2f: 'file-dcm.png'
-  };
-
-  fusionedUrl: string | null = null;
   loading = false;
-
   sliceIndex: number = 0;
   patientId: string = 'unknown';
+  nuevoPaciente: boolean = false;
+  isSwapping: boolean = false;
+
+
 
   constructor(private brainService: BrainSegmentationService) {}
 
-  // Cargar archivos desde input
   onFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length !== 2) return;
+    if (!input.files || input.files.length === 0) return;
 
-    const sorted = Array.from(input.files).sort((a, b) => a.name.localeCompare(b.name));
-    this.files.t1c = sorted[0];
-    this.files.t2f = sorted[1];
-    this.previewUrls.t1c = 'file-dcm.png';
-    this.previewUrls.t2f = 'file-dcm.png';
-    this.fusionedUrl = null;
+    const incomingFiles = Array.from(input.files);
+
+    for (const file of incomingFiles) {
+      const lowerName = file.name.toLowerCase();
+      if (lowerName.includes('t1') && !this.files.t1c) {
+        this.files.t1c = file;
+      } else if ((lowerName.includes('t2') || lowerName.includes('flair')) && !this.files.t2f) {
+        this.files.t2f = file;
+      } else if (!this.files.t1c) {
+        this.files.t1c = file;
+      } else if (!this.files.t2f) {
+        this.files.t2f = file;
+      }
+    }
+
+    this.clearResult();
   }
 
-  // Intercambiar los archivos entre T1c y T2-FLAIR
+
   swapModalities() {
+    this.isSwapping = true;
     const tempFile = this.files.t1c;
     this.files.t1c = this.files.t2f;
     this.files.t2f = tempFile;
-
-    const tempPreview = this.previewUrls.t1c;
-    this.previewUrls.t1c = this.previewUrls.t2f;
-    this.previewUrls.t2f = tempPreview;
+    setTimeout(() => {
+      this.isSwapping = false;
+    }, 600);
   }
 
-  // Drag and drop
+
   onDrop(event: DragEvent, _mod: Modalidad) {
     event.preventDefault();
     event.stopPropagation();
@@ -86,31 +96,52 @@ export class Segment120Component {
     const sortedFiles = Array.from(fileList).sort((a, b) => a.name.localeCompare(b.name));
     this.files.t1c = sortedFiles[0];
     this.files.t2f = sortedFiles[1];
+    this.clearResult();
+  }
 
-    this.previewUrls.t1c = 'file-dcm.png';
-    this.previewUrls.t2f = 'file-dcm.png';
+  clearResult() {
+    this.t1cUrl = null;
+    this.t2fUrl = null;
     this.fusionedUrl = null;
   }
 
+  removeFile(mod: Modalidad) {
+    this.files[mod] = null;
+    this.clearResult();
+  }
+
+  reset() {
+    this.files = { t1c: null, t2f: null };
+    this.t1cUrl = null;
+    this.t2fUrl = null;
+    this.fusionedUrl = null;
+    this.loading = false;
+    this.sliceIndex = 0;
+    this.patientId = 'unknown';
+    this.nuevoPaciente = false;
+  }
+
+
+
   fusionar() {
     if (!this.files.t1c || !this.files.t2f) return;
+    const finalPatientId = this.nuevoPaciente ? 'unknown' : this.patientId;
+
 
     this.loading = true;
-    this.fusionedUrl = null;
+    this.clearResult();
 
     this.brainService.fusionarGliomaFusionado(
       this.files.t1c,
       this.files.t2f,
       this.sliceIndex,
-      this.patientId
+      finalPatientId
     ).subscribe({
-      next: (blob: Blob) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          this.fusionedUrl = reader.result as string;
-          this.loading = false;
-        };
-        reader.readAsDataURL(blob);
+      next: (res) => {
+        this.t1cUrl = res.t1c_original;
+        this.t2fUrl = res.t2f_original;
+        this.fusionedUrl = res.segmentacion_fusionada;
+        this.loading = false;
       },
       error: (err) => {
         console.error('Error al fusionar:', err);

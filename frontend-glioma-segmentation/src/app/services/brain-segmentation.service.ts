@@ -38,17 +38,24 @@ export class BrainSegmentationService {
     fileT2f: File,
     slice: number = 0,
     patientId: string = 'unknown'
-  ): Observable<Blob> {
+  ): Observable<{
+    t1c_original: string;
+    t2f_original: string;
+    segmentacion_fusionada: string;
+  }> {
     const formData = new FormData();
     formData.append('file_t1c', fileT1c);
     formData.append('file_t2f', fileT2f);
     formData.append('slice_index', slice.toString());
     formData.append('patient_id', patientId);
 
-    return this.http.post(`${this.apiUrl}/fusionar-glioma`, formData, {
-      responseType: 'blob'
-    });
+    return this.http.post<{
+      t1c_original: string;
+      t2f_original: string;
+      segmentacion_fusionada: string;
+    }>(`${this.apiUrl}/fusionar-glioma`, formData);
   }
+
 
 
 
