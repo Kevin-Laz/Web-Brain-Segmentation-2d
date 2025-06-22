@@ -1,90 +1,143 @@
-import { Component } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { BrainSegmentationService } from '../../services/brain-segmentation.service';
+import { FormsModule } from '@angular/forms';
+import { quantum } from 'ldrs';
+
+type Modalidad = 't1c' | 't2f';
+quantum.register();
 
 @Component({
   selector: 'app-upload',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './upload.component.html',
-  styleUrl: './upload.component.scss'
+  styleUrl: './upload.component.scss',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class UploadComponent {
+  sliceIndex: number = 0;
+  nuevoPaciente: boolean = true;
+  private idActual: string = "unknown";
+  modalities: ('t1c' | 't2f')[] = ['t1c','t2f'];
+  files: Record<Modalidad, File|null> = { t1c: null, t2f: null };
+  @ViewChild('inputRef_t1c') inputT1c!: ElementRef<HTMLInputElement>;
+  @ViewChild('inputRef_t2f') inputT2f!: ElementRef<HTMLInputElement>;
 
-  selectedFile: File | null = null;
-  previewUrl: string | null = null;
-  procesamiento: boolean = false;
+  labelImg: Record<Modalidad, string> = { t1c: 'Original', t2f: 'Original' };
+  previewUrls: Record<Modalidad, string|null>   = { t1c: null, t2f: null };
+  processedUrls: Record<Modalidad, string|null> = { t1c: null, t2f: null };
+  segmentedUrls: Record<Modalidad, string|null> = { t1c: null, t2f: null };
 
-  onFileSelected(event:Event): void{
+  // flags de carga
+  processing: Record<Modalidad, boolean> = { t1c: false, t2f: false };
+  segmenting: Record<Modalidad, boolean> = { t1c: false, t2f: false };
+
+  constructor(private brainService: BrainSegmentationService) {}
+
+
+  triggerFileInput(mod: Modalidad) {
+    if (mod === 't1c') this.inputT1c.nativeElement.click();
+    if (mod === 't2f') this.inputT2f.nativeElement.click();
+  }
+
+  onFileSelected(event: Event, mod: Modalidad): void {
     const input = event.target as HTMLInputElement;
-    if(!input.files || input.files.length ===0 ){
-      return;
-    }
-    const file = input.files[0];
-    this.selectedFile = file;
-    const allowedImageTypes = ['image/png', 'image/jpeg'];
-    if (allowedImageTypes.includes(file.type)) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previewUrl = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-    } else {
-      this.previewUrl = 'file-dcm.png';
-    }
-
-    console.log('Archivo seleccionado:', file.name);
+    if (!input.files?.length) return;
+    this.setFile(input.files[0], mod);
   }
 
   onDragOver(event: DragEvent): void {
-  event.preventDefault();
-  event.stopPropagation();
-}
+    event.preventDefault(); event.stopPropagation();
+  }
 
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
+  onDrop(event: DragEvent, mod: Modalidad): void {
+    event.preventDefault(); event.stopPropagation();
+    if (!event.dataTransfer?.files?.length) return;
+    this.setFile(event.dataTransfer.files[0], mod);
+  }
 
-    if (!event.dataTransfer || !event.dataTransfer.files || event.dataTransfer.files.length === 0) {
+  private setFile(file: File, mod: Modalidad) {
+    this.files[mod] = file;
+    this.labelImg[mod] = 'Original';
+    // preview genérico
+    const allowed = ['image/png','image/jpeg'];
+    if (allowed.includes(file.type)) {
+      const reader = new FileReader();
+      reader.onload = () => this.previewUrls[mod] = reader.result as string;
+      reader.readAsDataURL(file);
+    } else {
+      this.previewUrls[mod] = 'file-dcm.png';
+    }
+    // limpiar previos
+    this.processedUrls[mod] = null;
+    this.segmentedUrls[mod] = null;
+  }
+
+  preprocess(mod: Modalidad) {
+    const file = this.files[mod];
+    if (!file || this.processing[mod]) return;
+
+    this.processing[mod] = true;
+    this.brainService.procesarDICOM(file, mod).subscribe({
+      next: blob => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.processedUrls[mod] = reader.result as string;
+          this.processing[mod] = false;
+        };
+        this.labelImg[mod] = 'Preprocesado';
+        reader.readAsDataURL(blob);
+      },
+      error: err => {
+        console.error('Error procesar-dcm', err);
+        this.processing[mod] = false;
+      }
+    });
+  }
+
+  segment(mod: Modalidad) {
+    const file = this.files[mod];
+    if (!file || this.segmenting[mod]) return;
+
+    if (!this.processedUrls[mod]) {
+      this.blinkPreprocessButton(mod);
       return;
     }
 
-    const file = event.dataTransfer.files[0];
-    this.selectedFile = file;
-
-    const allowedImageTypes = ['image/png', 'image/jpeg'];
-    if (allowedImageTypes.includes(file.type)) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previewUrl = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-    } else {
-      this.previewUrl = 'file-dcm.png';
+    if (this.nuevoPaciente) {
+      this.idActual = `id_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     }
 
-    console.log('Archivo arrastrado:', file.name);
-  }
-
-
-  iniciarSegmentacion(): void {
-    if (!this.selectedFile || this.procesamiento) return;
-
-    const formData = new FormData();
-    formData.append('file', this.selectedFile);
-
-    fetch('http://localhost:8000/procesar-dcm', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => response.blob())
-    .then(blob => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previewUrl = reader.result as string;
-      };
-      reader.readAsDataURL(blob);
-      this.procesamiento = true;
-    })
-    .catch(error => {
-      console.error('Error al segmentar la imagen:', error);
+    this.segmenting[mod] = true;
+    this.brainService.segmentarGlioma(file, mod, this.sliceIndex, this.idActual).subscribe({
+      next: blob => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.segmentedUrls[mod] = reader.result as string;
+          this.segmenting[mod] = false;
+        };
+        reader.readAsDataURL(blob);
+      },
+      error: err => {
+        console.error('Error segmentar-glioma', err);
+        this.segmenting[mod] = false;
+      }
     });
   }
+
+  removeFile(mod: Modalidad) {
+    this.files[mod] = null;
+    this.previewUrls[mod] = null;
+    this.processedUrls[mod] = null;
+    this.segmentedUrls[mod] = null;
+  }
+
+  blinkPreprocessButton(mod: Modalidad) {
+    const btn = document.getElementById(`preprocess-btn-${mod}`);
+    if (btn) {
+      btn.classList.add('blink-border');
+      setTimeout(() => btn.classList.remove('blink-border'), 2000);
+    }
+  }
+
+
 }

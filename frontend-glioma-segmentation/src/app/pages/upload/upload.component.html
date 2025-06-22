@@ -1,53 +1,112 @@
 <div class="upload-container">
-  @if(!previewUrl){
-    <div class="upload-box"
-      (click)="fileInput.click()"
-      (dragover)="onDragOver($event)"
-      (drop)="onDrop($event)">">
-      <button>Cargar imagen</button>
-      <h2>Arrastra tu imagen aquí</h2>
-      <p>o haz clic para seleccionarla desde tu computadora</p>
-      <input
-        type="file"
-        hidden
-        #fileInput
-        accept=".dcm,.png,.jpg,.jpeg"
-        (change)="onFileSelected($event)"
-      />
-    </div>
-  }
-  @else {
-    <div class="preview">
-      <div class="preview-label">
-        Vista previa
-      </div>
-      <img class="preview-img" [src]="previewUrl" alt="Vista previa" />
-    </div>
-  }
+  @for (mod of modalities; track mod) {
+    <div class="upload-section">
+      <h3 class="mod-label">Modalidad {{ mod.toUpperCase() }}</h3>
 
-  @if(!previewUrl){
-    <div class="example-image">
-      <div class="content-img">
-        <img src="mri_example.png" alt="Ejemplo de imagen cerebral MRI" />
-        <p class="caption">Ejemplo de corte axial</p>
-      </div>
+      <!-- Drag & Drop / Upload -->
+      @if (!previewUrls[mod]) {
+        <div
+          class="upload-box"
+          (click)="triggerFileInput(mod)"
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop($event, mod)"
+        >
+          <button>Cargar {{ mod.toUpperCase() }}</button>
+          <h2>Arrastra tu {{ mod.toUpperCase() }} aquí</h2>
+          <p>o haz clic para seleccionarla</p>
+          @if(mod == 't1c'){
+            <input
+              type="file"
+              [attr.accept]="'.dcm,.png,.jpg,.jpeg'"
+              [attr.data-mod]="mod"
+              (change)="onFileSelected($event, mod)"
+              hidden
+              #inputRef_t1c
+            />
+          }
+          @else{
+            <input
+              type="file"
+              [attr.accept]="'.dcm,.png,.jpg,.jpeg'"
+              [attr.data-mod]="mod"
+              (change)="onFileSelected($event, mod)"
+              hidden
+              #inputRef_t2f
+            />
+          }
 
-      <div class="content-img">
-        <img src="tumor_example.png" alt="Ejemplo de tumor cerebral" />
-        <p class="caption">Ejemplo de tumor cerebral</p>
-      </div>
-    </div>
-  }
-  @else{
-    <div class="content-tools">
-      @if(!procesamiento){
-        <button (click)="iniciarSegmentacion()">Iniciar procesamiento</button>
+        </div>
       }
-      @else{
-        <button (click)="iniciarSegmentacion()">Iniciar segmentación</button>
+
+      <!-- Preview -->
+      @if (previewUrls[mod]) {
+        <button class="delete-btn" (click)="removeFile(mod)">🗑️</button>
+        <div class="preview">
+
+          <!-- Mostrar loader si está procesando -->
+          @if (processing[mod]) {
+            <div class="loader-overlay">
+              <l-quantum size="55" speed="1.75" color="#0070f3"></l-quantum>
+            </div>
+          }
+          @else {
+            <div class="preview-label">{{labelImg[mod]}}</div>
+            <img
+              class="preview-img"
+              [src]="processedUrls[mod] || previewUrls[mod]"
+              alt="Preview {{ mod }}"
+            />
+          }
+        </div>
+
+        @if (!segmentedUrls[mod]) {
+          <div class="slice-controls">
+            <label for="sliceIndex">Corte axial (0–154):</label>
+            <div class="slice-range-group">
+              <input type="range" min="0" max="154" [(ngModel)]="sliceIndex" class="slice-range" />
+              <input type="number" min="0" max="154" [(ngModel)]="sliceIndex" class="slice-number" />
+            </div>
+
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="nuevoPaciente" />
+              ¿Es un nuevo paciente?
+            </label>
+          </div>
+        }
       }
-      <button>Recorte manual</button>
+
+
+      <!-- Segmentación -->
+      @if (segmenting[mod] || segmentedUrls[mod]) {
+        <div class="preview">
+          <div class="preview-label">Máscara de Glioma</div>
+
+          @if (segmenting[mod]) {
+            <div class="loader-overlay">
+              <l-quantum size="55" speed="1.75" color="#446ce4"></l-quantum>
+            </div>
+          }
+          @else {
+            <img class="preview-img" [src]="segmentedUrls[mod]" alt="Mask {{ mod }}" />
+          }
+        </div>
+      }
+
+      <!-- Controles -->
+      @if (files[mod]) {
+        <div class="content-tools">
+          @if (!processing[mod] && !processedUrls[mod]) {
+            <button id="preprocess-btn-{{mod}}" (click)="preprocess(mod)">
+              Preprocesar {{ mod.toUpperCase() }}
+            </button>
+          }
+          @if (!segmenting[mod] && !segmentedUrls[mod] && processedUrls[mod]) {
+            <button (click)="segment(mod)">
+              Segmentar {{ mod.toUpperCase() }}
+            </button>
+          }
+        </div>
+      }
     </div>
   }
-
 </div>
