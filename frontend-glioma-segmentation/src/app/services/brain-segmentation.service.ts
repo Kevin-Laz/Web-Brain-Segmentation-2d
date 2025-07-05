@@ -56,7 +56,36 @@ export class BrainSegmentationService {
     }>(`${this.apiUrl}/fusionar-glioma`, formData);
   }
 
+recortarRegion32(filename: string, centerX: number, centerY: number): Observable<Blob> {
+  const formData = new FormData();
+  formData.append('filename', filename);
+  formData.append('center_x', centerX.toString());
+  formData.append('center_y', centerY.toString());
 
+  return this.http.post(`${this.apiUrl}/recortar-region-32x32`, formData, { responseType: 'blob' });
+}
 
+segmentarRegion32(file: File, modalidad: string): Observable<Blob> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('modalidad', modalidad);
+
+  return this.http.post(`${this.apiUrl}/segmentar-32x32`, formData, { responseType: 'blob' });
+}
+
+segmentarRegion32ConInfo(
+    file: File,
+    modalidad: string,
+    sliceIndex: number,
+    patientId: string
+  ): Observable<Blob> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('modalidad', modalidad);
+    formData.append('slice_index', sliceIndex.toString());
+    formData.append('patient_id', patientId);
+
+    return this.http.post(`${this.apiUrl}/segmentar-32x32`, formData, { responseType: 'blob' });
+  }
 
 }

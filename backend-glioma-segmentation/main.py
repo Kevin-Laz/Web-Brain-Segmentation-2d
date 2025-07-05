@@ -2,6 +2,7 @@ from fastapi import FastAPI, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from preprocesamiento import procesar_dicom_con_segmentacion, continuar_segmentacion_cerebro, convertir_dicom_a_array
 from segmentacion_glioma import segmentar_glioma
+from segmentacion_glioma_32 import segmentar_glioma_32
 from utils import read_ids_from_txt, generar_mapa_ids_normalizados
 import shutil
 import os
@@ -176,3 +177,85 @@ async def fusionar_glioma_endpoint(
 
     except Exception as e:
         return {"error": f"No se pudo realizar la fusión: {str(e)}"}
+    
+
+@app.post("/recortar-region-32x32")
+async def recortar_region_32x32(
+    filename: str = Form(...),
+    center_x: int = Form(...),
+    center_y: int = Form(...)
+):
+    try:
+        path = f"temp/{filename}_processed.png"
+        if not os.path.exists(path):
+            return {"error": "La imagen procesada no fue encontrada."}
+
+        # Cargar imagen preprocesada 120x120
+        img = Image.open(path).convert("L")
+        img_array = np.array(img).astype(np.float32) / 255.0
+        img_array = (img_array - img_array.mean()) / (img_array.std() + 1e-8)
+
+        # Recorte centrado en (x, y)
+        half = 16
+        x1, x2 = center_x - half, center_x + half
+        y1, y2 = center_y - half, center_y + half
+
+        if x1 < 0 or y1 < 0 or x2 > 120 or y2 > 120:
+            return {"error": "Coordenadas fuera del rango permitido (0–119)."}
+
+        crop = img_array[y1:y2, x1:x2]
+        if crop.shape != (32, 32):
+            return {"error": "Recorte inválido: no tiene tamaño 32x32."}
+
+        # Convertir recorte en imagen PNG
+        crop_vis = ((crop - crop.min()) / (crop.ptp() + 1e-8) * 255).astype(np.uint8)
+        img_crop = Image.fromarray(crop_vis)
+        buf = io.BytesIO()
+        img_crop.save(buf, format="PNG")
+        buf.seek(0)
+
+        return StreamingResponse(buf, media_type="image/png")
+
+    except Exception as e:
+        return {"error": f"No se pudo recortar la región: {str(e)}"}
+
+
+@app.post("/segmentar-32x32")
+async def segmentar_32x32(
+    file: UploadFile = File(...),
+    modalidad: str = Form("t1c"),
+    slice_index: int = Form(0),
+    patient_id: str = Form("unknown")
+):
+    try:
+        # Leer imagen 32x32 enviada
+        img = Image.open(file.file).convert("L")
+        img_array = np.array(img).astype(np.float32) / 255.0
+        img_array = (img_array - img_array.mean()) / (img_array.std() + 1e-8)
+
+        # Calcular z_norm y id_norm
+        z_group = slice_index // 4
+        z_norm = z_group / ((155 // 4) - 1) if slice_index >= 0 else 0.5
+        id_base = patient_id.split("-000")[0]
+        id_norm = id_map.get(id_base, 1.0)
+
+        # Construir entrada multicanal (1, 32, 32, 3)
+        c1 = img_array
+        c2 = np.ones_like(c1) * z_norm
+        c3 = np.ones_like(c1) * id_norm
+        input_tensor = np.stack([c1, c2, c3], axis=-1)[None, ...]
+
+        # Predicción
+        pred = segmentar_glioma_32(modalidad, input_tensor)
+
+        # Convertir predicción a imagen
+        img_vis = (pred * 255).astype(np.uint8)
+        img_pil = Image.fromarray(img_vis)
+        buf = io.BytesIO()
+        img_pil.save(buf, format="PNG")
+        buf.seek(0)
+
+        return StreamingResponse(buf, media_type="image/png")
+
+    except Exception as e:
+        return {"error": f"No se pudo segmentar la región: {str(e)}"}

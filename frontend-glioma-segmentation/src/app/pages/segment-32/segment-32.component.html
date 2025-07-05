@@ -1,1 +1,89 @@
-<p>segment-32 works!</p>
+<div class="upload-container-single">
+  <h3 class="mod-label">Segmentación de región 32x32</h3>
+
+  <!-- Subida de imagen -->
+  @if (!file && !loading) {
+    <div class="upload-box" (click)="triggerInput()">
+      <button>Subir imagen</button>
+      <h2>Arrastra o selecciona una imagen DICOM</h2>
+      <input type="file" hidden accept=".dcm" (change)="onFileSelected($event)" #inputRef />
+    </div>
+  }
+
+  <!-- Controles después de cargar archivo -->
+  @if (file && !preprocessedUrl && !loading) {
+    <div class="controls">
+      <label for="modalidad">Modalidad:</label>
+      <select id="modalidad" [(ngModel)]="modalidad">
+        <option value="t1c">T1c</option>
+        <option value="t2f">T2-FLAIR</option>
+      </select>
+
+      <label for="slice">Índice del corte axial:</label>
+      <input type="number" id="slice" [(ngModel)]="sliceIndex" min="0" max="154" />
+
+      <label for="id">ID del paciente:</label>
+      <input type="text" id="id" [(ngModel)]="patientId" placeholder="BRATS-XXXX" />
+
+      <label>
+        <input type="checkbox" [(ngModel)]="nuevoPaciente" />
+        Paciente nuevo
+      </label>
+
+      <button class="fusionar-btn" (click)="procesar()">Procesar imagen</button>
+    </div>
+  }
+
+  <!-- Loader -->
+  @if (loading) {
+    <div class="preview">
+      <div class="preview-label">Procesando...</div>
+      <div class="loader-overlay">
+        <l-quantum size="55" speed="1.75" color="#f39c12"></l-quantum>
+      </div>
+    </div>
+  }
+
+  <!-- Imagen preprocesada -->
+  @if (preprocessedUrl) {
+    <div class="preview">
+      <div class="preview-label">Preprocesada (clic para seleccionar)</div>
+      <img
+        class="preview-img"
+        [src]="preprocessedUrl"
+        (click)="onImageClick($event)"
+        alt="Preprocesada"
+        #imgRef
+      />
+      @if (selectedX !== null && selectedY !== null) {
+        <div
+          class="selector-box"
+          [ngStyle]="{
+            left: (selectedX - 16) + 'px',
+            top: (selectedY - 16) + 'px'
+          }"
+        ></div>
+      }
+      <div class="file-name">{{ filename }}</div>
+    </div>
+  }
+
+  <!-- Resultados -->
+  @if (croppedUrl || segmentedUrl) {
+    <div class="result-section">
+      @if (croppedUrl) {
+        <div class="preview">
+          <div class="preview-label">Región 32x32</div>
+          <img class="preview-img" [src]="croppedUrl" alt="Corte" />
+        </div>
+      }
+      @if (segmentedUrl) {
+        <div class="preview">
+          <div class="preview-label">Segmentación</div>
+          <img class="preview-img" [src]="segmentedUrl" alt="Segmentación" />
+        </div>
+      }
+    </div>
+    <button class="clear-btn" (click)="reset()">Nueva imagen</button>
+  }
+</div>
