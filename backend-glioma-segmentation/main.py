@@ -17,7 +17,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=["https://frontend-gliomas.pages.dev"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,8 +31,8 @@ id_map = generar_mapa_ids_normalizados(samples_train + samples_val + samples_tes
 
 @app.post("/procesar-dcm")
 async def procesar_dcm(file: UploadFile = File(...), modalidad: str = Form("t1c")):
-    os.makedirs("temp", exist_ok=True)
-    temp_path = f"temp/{file.filename}"
+    os.makedirs("tmp", exist_ok=True)
+    temp_path = f"tmp/{file.filename}"
 
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -44,7 +44,7 @@ async def procesar_dcm(file: UploadFile = File(...), modalidad: str = Form("t1c"
         img_vis = ((img_array - img_array.min()) / (img_array.ptp() + 1e-8) * 255).astype(np.uint8)
         img_pil = Image.fromarray(img_vis)
         # Guardar imagen preprocesada
-        processed_path = f"temp/{file.filename}_processed.png"
+        processed_path = f"tmp/{file.filename}_processed.png"
         img_pil.save(processed_path, format="PNG")
 
         buf = io.BytesIO()
@@ -64,8 +64,8 @@ async def segmentar_glioma_endpoint(
     slice_index: int = Form(0),
     patient_id: str = Form("unknown")
 ):
-    os.makedirs("temp", exist_ok=True)
-    processed_path = f"temp/{file.filename}_processed.png"
+    os.makedirs("tmp", exist_ok=True)
+    processed_path = f"tmp/{file.filename}_processed.png"
 
     try:
         # Leer imagen procesada (PNG), escala y normaliza
@@ -108,10 +108,10 @@ async def fusionar_glioma_endpoint(
     patient_id: str = Form("unknown"),
     alpha: float = Form(0.45)
 ):
-    os.makedirs("temp", exist_ok=True)
+    os.makedirs("tmp", exist_ok=True)
 
-    path_t1c = f"temp/{file_t1c.filename}"
-    path_t2f = f"temp/{file_t2f.filename}"
+    path_t1c = f"tmp/{file_t1c.filename}"
+    path_t2f = f"tmp/{file_t2f.filename}"
 
     with open(path_t1c, "wb") as f:
         shutil.copyfileobj(file_t1c.file, f)
@@ -186,7 +186,7 @@ async def recortar_region_32x32(
     center_y: int = Form(...)
 ):
     try:
-        path = f"temp/{filename}_processed.png"
+        path = f"tmp/{filename}_processed.png"
         if not os.path.exists(path):
             return {"error": "La imagen procesada no fue encontrada."}
 
@@ -259,3 +259,10 @@ async def segmentar_32x32(
 
     except Exception as e:
         return {"error": f"No se pudo segmentar la región: {str(e)}"}
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)

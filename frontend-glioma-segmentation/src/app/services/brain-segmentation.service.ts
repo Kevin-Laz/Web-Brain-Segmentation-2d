@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class BrainSegmentationService {
 
-  private apiUrl = 'http://localhost:8000';
+  private apiUrl = 'https://glioma-backend-682743754173.us-central1.run.app';
 
   constructor(private http: HttpClient) { }
 
