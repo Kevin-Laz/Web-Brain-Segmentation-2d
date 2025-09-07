@@ -160,7 +160,7 @@ http://localhost:8000/docs
   ![Segment 120](./docs/images/segmentacion_comparacion.png)
 
 - **Segmentación 32×32 (ROI)**  
-  ![Segment 32](./docs/images/preview_segmentar32x32)
+  ![Segment 32](./docs/images/preview_segmentar32x32.png)
 
 - **Fusión T1c + T2‑FLAIR**  
   ![Fusion](./docs/images/resultado_segmentar120x120.png)
