@@ -157,13 +157,13 @@ http://localhost:8000/docs
   ![Segment 120](./docs/images/preview_segmentar120x120.png)
 
 - **Resultado de segmentación 120×120**  
-  ![Segment 120](./docs/images/resultado_segmentar120x120.png)
+  ![Segment 120](./docs/images/segmentacion_comparacion.png)
 
 - **Segmentación 32×32 (ROI)**  
-  ![Segment 32](./docs/images/segment32.png)
+  ![Segment 32](./docs/images/preview_segmentar32x32)
 
 - **Fusión T1c + T2‑FLAIR**  
-  ![Fusion](./docs/images/fusion.png)
+  ![Fusion](./docs/images/resultado_segmentar120x120.png)
 
 
 ---

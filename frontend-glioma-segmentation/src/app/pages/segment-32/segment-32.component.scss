@@ -68,6 +68,7 @@
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 500;
+    z-index: 1;
   }
 
   &-img {
@@ -307,4 +308,121 @@
   background-color: rgba(255, 71, 87, 0.15);
   pointer-events: none;
   z-index: 5;
+}
+
+
+// Tablets
+@media (max-width: 1024px) {
+  .upload-container-single {
+    padding: 1.5rem;
+    gap: 1.5rem;
+
+    .mod-label {
+      font-size: 1.3rem;
+      text-align: center;
+    }
+
+    .upload-box {
+      max-width: 90%;
+      padding: 2rem;
+    }
+
+    .controls {
+      max-width: 90%;
+    }
+
+    .preview-img{
+      width: 280px;
+    }
+    .loader-overlay {
+      width: 280px;
+      height: 280px;
+    }
+
+    .result-section {
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+  }
+}
+
+// Móviles
+@media (max-width: 700px) {
+  .upload-container-single {
+    padding: 1rem;
+    gap: 1rem;
+    min-height: calc(100vh - 305px);
+
+    .mod-label {
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    .upload-box {
+      width: 100%;
+      padding: 1.25rem;
+
+      h2 {
+        font-size: 1rem;
+      }
+
+      button {
+        font-size: 1rem;
+        padding: 0.6rem 1rem;
+      }
+    }
+
+    .controls {
+      width: 100%;
+      max-width: 100%;
+      padding: 0 0.5rem;
+
+      label {
+        font-size: 0.9rem;
+      }
+
+      input,
+      select {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.7rem;
+      }
+
+      .fusionar-btn {
+        width: 100%;
+        font-size: 1rem;
+      }
+    }
+
+    .result-section {
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .clear-btn {
+      width: 100%;
+      font-size: 1rem;
+    }
+  }
+}
+
+.controls select {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  background-color: #fff;
+  appearance: none;         // limpia estilos nativos
+}
+
+.controls option {
+  font-size: 1rem;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  appearance: none;
 }

@@ -255,3 +255,84 @@
     color: rgb(255, 248, 248);
   }
 }
+
+// Tablet
+@media (max-width: 1024px) {
+  .upload-container-single {
+    padding: 1.5rem;
+
+    .mod-label {
+      font-size: 1.25rem;
+    }
+
+    .upload-box {
+      max-width: 90%;
+      padding: 2rem;
+    }
+
+    .result-section {
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+  }
+}
+
+// Móvil
+@media (max-width: 700px) {
+  .upload-container-single {
+    padding: 1rem;
+    gap: 1rem;
+    min-height: calc(100vh - 305px);
+
+    .mod-label {
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    .upload-box {
+      width: 100%;
+      padding: 1.25rem;
+      h2 {
+        font-size: 1rem;
+      }
+      p {
+        font-size: 0.9rem;
+      }
+      button {
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+      }
+    }
+
+    .preview-img{
+      width: 300px;
+    }
+    .loader-overlay {
+      width: 300px;
+      height: 300px;
+    }
+
+    .result-section {
+      flex-direction: column;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .slice-range-group {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+
+      .slice-number {
+        width: 100%;
+      }
+    }
+
+    .fusionar-btn,
+    .clear-btn {
+      width: 100%;
+      font-size: 1rem;
+    }
+  }
+}
